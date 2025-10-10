@@ -11,32 +11,33 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
           # Probes to ensure health and smooth rollouts
+          # Liveness: keep conservative; only restarts truly dead apps
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: 8080
-            initialDelaySeconds: 90
-            periodSeconds: 10
+            initialDelaySeconds: 120
+            periodSeconds: 15
             timeoutSeconds: 5
-            failureThreshold: 3
+            failureThreshold: 5
             successThreshold: 1
 
+          # Readiness: only route traffic when app + deps are ready
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 8080
             initialDelaySeconds: 30
-            periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
-            successThreshold: 1
-
-          startupProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 0
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 24
+            failureThreshold: 6
+            successThreshold: 1
+
+          # Startup: give ample time; use TCP to wait for port open
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 36
             successThreshold: 1
