@@ -1,0 +1,53 @@
+# Kubernetes Secrets - NEVER COMMIT!
+**/secret.yaml
+**/secrets.yaml
+*.secret.yaml
+*.secrets.yaml
+
+# Kubeconfig files
+kubeconfig*
+*.kubeconfig
+.kube/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Terraform (if used in future)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Ansible (if used in future)
+*.retry
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+dist/
+build/
+target/

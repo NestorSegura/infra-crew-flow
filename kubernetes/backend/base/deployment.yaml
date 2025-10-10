@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crew-flow-server
+  labels:
+    app: crew-flow-server
+    component: backend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: crew-flow-server
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: crew-flow-server
+        component: backend
+    spec:
+      imagePullSecrets:
+        - name: scaleway-registry-secret
+
+      containers:
+        - name: crew-flow-server
+          image: rg.fr-par.scw.cloud/jb-crew-flow-registry/crew-flow-server:prod
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: crew-flow-server-config
+            - secretRef:
+                name: crew-flow-server-secret
+            - secretRef:
+                name: crew-flow-db-secret
+
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+
+      securityContext:
+        fsGroup: 1000
+
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst

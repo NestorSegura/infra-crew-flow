@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crew-flow-server-config
+  namespace: prod
+  labels:
+    app: crew-flow-server
+    component: backend
+    environment: production
+data:
+  # Application configuration (non-sensitive)
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+
+  # Logging configuration
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_DE_JIBEMATES: "INFO"
+
+  # JPA/Hibernate configuration
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.PostgreSQLDialect"
+  SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
+
+  # Flyway configuration
+  SPRING_FLYWAY_ENABLED: "true"
+  SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+  SPRING_FLYWAY_VALIDATE_ON_MIGRATE: "true"
+
+  # Redis configuration (optional - can be added later)
+  # SPRING_DATA_REDIS_HOST: "redis-service.prod.svc.cluster.local"
+  # SPRING_DATA_REDIS_PORT: "6379"
+  SPRING_CACHE_TYPE: "none"
+
+  # OAuth2 Resource Server - Keycloak
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "https://crew-flow.auth.jibemates.de/realms/crew-flow"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: "https://crew-flow.auth.jibemates.de/realms/crew-flow/protocol/openid-connect/certs"
+
+  # Keycloak Admin Client
+  KEYCLOAK_ADMIN_BASE_URL: "https://crew-flow.auth.jibemates.de"
+  KEYCLOAK_ADMIN_REALM: "crew-flow"
+  KEYCLOAK_ADMIN_CLIENT_ID: "crew-flow-api"
+  KEYCLOAK_ADMIN_ROLES_CLIENT_ID: "crew-flow"
+
+  # Actuator endpoints
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "when-authorized"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED: "true"
+  MANAGEMENT_HEALTH_READINESSSTATE_ENABLED: "true"

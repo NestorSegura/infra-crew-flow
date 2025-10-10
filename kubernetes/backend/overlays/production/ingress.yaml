@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: crew-flow-server-ingress
+  namespace: prod
+  labels:
+    app: crew-flow-server
+    component: backend
+    environment: production
+  annotations:
+    # Nginx Ingress Controller
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+
+    # CORS headers
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://crew-flow.app.jibemates.de,https://crew-flow.jibemates.de,https://crew-flow.auth.jibemates.de"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization, Content-Type, X-Requested-With"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+
+    # Certificate manager
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    external-dns.alpha.kubernetes.io/hostname: "crew-flow.api.jibemates.de"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - crew-flow.api.jibemates.de
+      secretName: crew-flow-api-tls
+  rules:
+    - host: crew-flow.api.jibemates.de
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: crew-flow-server
+                port:
+                  number: 8080

@@ -1,0 +1,106 @@
+## Keycloak (Helm) production values for external DB on Scaleway
+## Chart: bitnami/keycloak
+
+## Scale for HA
+replicaCount: 2
+
+## Disable bundled PostgreSQL; use external managed DB
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: 51.15.86.152
+  port: 1664
+  user: jm-keycloak-db
+  database: keycloak
+  ## Do not commit real passwords in Git. Provide via an existing Secret.
+  existingSecret: keycloak-secrets
+  existingSecretPasswordKey: db-password
+
+## Admin user via Secret (do not store in plain values)
+auth:
+  adminUser: admin
+  existingSecret: keycloak-secrets
+  existingSecretPasswordKey: admin-password
+
+## Ingress with cert-manager TLS (adjust hostname and class)
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hostname: crew-flow.auth.jibemates.de
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    external-dns.alpha.kubernetes.io/hostname: crew-flow.auth.jibemates.de
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls: true
+  extraTls:
+    - hosts:
+        - crew-flow.auth.jibemates.de
+      secretName: keycloak-tls
+
+## Service
+service:
+  type: ClusterIP
+
+## Container settings suitable for ingress behind a proxy
+proxy: edge
+extraEnvVars:
+  - name: KC_HOSTNAME
+    value: crew-flow.auth.jibemates.de
+  - name: KC_FRONTEND_URL
+    value: https://crew-flow.auth.jibemates.de
+  - name: KC_PROXY_HEADERS
+    value: xforwarded
+  - name: KC_HOSTNAME_STRICT_HTTPS
+    value: "true"
+  - name: KC_FEATURES
+    value: quick-theme
+  - name: KC_DB
+    value: postgres
+  - name: KC_HEALTH_ENABLED
+    value: "true"
+  - name: KC_METRICS_ENABLED
+    value: "true"
+  - name: KC_DB_URL_PARAMETERS
+    value: sslmode=require
+
+## Persistence is optional; Keycloak state is stored in DB
+persistence:
+  enabled: false
+
+## Resources (tune to your cluster sizing)
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 2
+    memory: 4Gi
+
+## Health probes
+livenessProbe:
+  enabled: true
+readinessProbe:
+  enabled: true
+
+## Metrics (enable ServiceMonitor if you use Prometheus Operator)
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+
+## Pod disruption budget to avoid total outage during maintenance
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+## Mount custom theme JAR from a ConfigMap
+extraVolumes:
+  - name: theme-jar
+    configMap:
+      name: keycloak-theme-jibe-mates-light
+extraVolumeMounts:
+  - name: theme-jar
+    mountPath: /opt/bitnami/keycloak/providers/jibe-mates-light.jar
+    subPath: jibe-mates-light.jar
+    readOnly: true
