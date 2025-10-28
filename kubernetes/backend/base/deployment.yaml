@@ -10,8 +10,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+      maxSurge: 1        # Create new pod before terminating old one
+      maxUnavailable: 0  # Keep old pod running for zero downtime
   selector:
     matchLabels:
       app: crew-flow-server
@@ -45,10 +45,10 @@ spec:
 
           resources:
             requests:
-              memory: "512Mi"
+              memory: "384Mi"  # Reduced from 512Mi to allow 2 pods during rollout
               cpu: "250m"
             limits:
-              memory: "1Gi"
+              memory: "1Gi"    # Keep same limit for safety
               cpu: "1000m"
 
           securityContext:
@@ -63,5 +63,6 @@ spec:
       securityContext:
         fsGroup: 1000
 
+      terminationGracePeriodSeconds: 60  # Allow time for graceful shutdown
       restartPolicy: Always
       dnsPolicy: ClusterFirst

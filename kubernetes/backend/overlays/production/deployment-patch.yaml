@@ -41,3 +41,12 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 36
             successThreshold: 1
+
+          # Graceful shutdown: wait for connections to drain before killing
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - -c
+                  - sleep 10  # Allow load balancer to deregister pod
