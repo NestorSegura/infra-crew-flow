@@ -10,8 +10,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1        # Create new pod before terminating old one
-      maxUnavailable: 0  # Keep old pod running for zero downtime
+      maxSurge: 0        # Create new pod before terminating old one
+      maxUnavailable: 1  # Keep old pod running for zero downtime
   selector:
     matchLabels:
       app: crew-flow-server
