@@ -25,6 +25,16 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
     nginx.ingress.kubernetes.io/cors-max-age: "1728000"
 
+    # Security headers (using ConfigMap)
+    nginx.ingress.kubernetes.io/custom-http-errors: ""
+    nginx.ingress.kubernetes.io/proxy-add-headers: "ingress-nginx/custom-headers"
+
+    # Additional security headers via annotations
+    nginx.ingress.kubernetes.io/hsts: "true"
+    nginx.ingress.kubernetes.io/hsts-max-age: "31536000"
+    nginx.ingress.kubernetes.io/hsts-include-subdomains: "true"
+    nginx.ingress.kubernetes.io/hsts-preload: "true"
+
     # Certificate manager
     cert-manager.io/cluster-issuer: "letsencrypt"
     external-dns.alpha.kubernetes.io/hostname: "crew-flow.api.jibemates.de"
