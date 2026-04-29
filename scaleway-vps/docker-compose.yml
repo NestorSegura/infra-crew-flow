@@ -1,0 +1,87 @@
+# crew-flow VPS stack — Caddy + Spring Boot backend + Keycloak.
+# Postgres is managed by Scaleway (external).
+# Frontend is built in CI and rsynced to /srv/crew-flow/frontend (served by Caddy).
+
+services:
+  backend:
+    image: ghcr.io/nestorsegura/crew-flow-server:${BACKEND_TAG:-latest}
+    container_name: crew-flow-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      SERVER_FORWARD_HEADERS_STRATEGY: NATIVE
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_APP_NAME}?sslmode=require
+      SPRING_DATASOURCE_USERNAME: ${DB_APP_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_APP_PASSWORD}
+      # JPA / Flyway
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      # OAuth2 resource server
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: https://${KEYCLOAK_HOST}/realms/${KEYCLOAK_REALM}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: https://${KEYCLOAK_HOST}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs
+      # Keycloak admin client
+      KEYCLOAK_ADMIN_BASE_URL: https://${KEYCLOAK_HOST}
+      KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID}
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+      KEYCLOAK_ADMIN_ROLES_CLIENT_ID: ${KEYCLOAK_ADMIN_ROLES_CLIENT_ID}
+      # No Redis
+      SPRING_CACHE_TYPE: none
+      MANAGEMENT_HEALTH_REDIS_ENABLED: "false"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
+    networks: [crew-flow-net]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.3
+    container_name: crew-flow-keycloak
+    restart: unless-stopped
+    command: ["start"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: ${DB_HOST}
+      KC_DB_URL_PORT: ${DB_PORT}
+      KC_DB_URL_DATABASE: ${DB_KC_NAME}
+      KC_DB_USERNAME: ${DB_KC_USER}
+      KC_DB_PASSWORD: ${DB_KC_PASSWORD}
+      KC_DB_URL_PARAMETERS: sslmode=require
+      KC_HOSTNAME: ${KEYCLOAK_HOST}
+      KC_HOSTNAME_STRICT: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      KC_CACHE: local
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD}
+      JAVA_OPTS_KC_HEAP: -XX:MaxRAMPercentage=60.0
+    networks: [crew-flow-net]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: crew-flow-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ROOT_HOST: ${ROOT_HOST}
+      APP_HOST: ${APP_HOST}
+      API_HOST: ${API_HOST}
+      AUTH_HOST: ${KEYCLOAK_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /srv/crew-flow/frontend:/srv/frontend:ro
+      - /srv/crew-flow/caddy_data:/data
+      - /srv/crew-flow/caddy_config:/config
+    networks: [crew-flow-net]
+    depends_on:
+      - backend
+      - keycloak
+
+networks:
+  crew-flow-net:
+    name: crew-flow-net
+    driver: bridge

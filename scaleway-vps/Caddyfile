@@ -1,0 +1,36 @@
+# Root domain — placeholder until real landing page is built.
+{$ROOT_HOST} {
+    encode zstd gzip
+    respond "crew-flow.eu — coming soon" 200
+}
+
+# Frontend SPA — Vite build, served as static files.
+{$APP_HOST} {
+    encode zstd gzip
+    root * /srv/frontend
+
+    @hashed path_regexp ^/.+\.[0-9a-f]{8,}\.(js|css|svg|png|jpg|jpeg|gif|webp|woff|woff2|ico)$
+    header @hashed Cache-Control "public, max-age=31536000, immutable"
+    header /index.html Cache-Control "no-cache"
+
+    try_files {path} /index.html
+    file_server
+}
+
+# Backend API.
+{$API_HOST} {
+    encode zstd gzip
+    reverse_proxy backend:8080
+}
+
+# Keycloak — large headers, no buffering.
+{$AUTH_HOST} {
+    encode zstd gzip
+    reverse_proxy keycloak:8080 {
+        flush_interval -1
+        transport http {
+            read_buffer 128KiB
+            write_buffer 128KiB
+        }
+    }
+}
