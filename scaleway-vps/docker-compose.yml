@@ -33,6 +33,10 @@ services:
       SPRING_CACHE_TYPE: none
       MANAGEMENT_HEALTH_REDIS_ENABLED: "false"
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
+      # Override hardcoded jibemates.de URLs in application-prod.properties
+      SPRINGDOC_SWAGGER_UI_URLS_0_NAME: Crew Flow API
+      SPRINGDOC_SWAGGER_UI_URLS_0_URL: https://${API_HOST}/v3/api-docs
+      SPRINGDOC_SWAGGER_UI_OAUTH2_REDIRECT_URL: https://${API_HOST}/swagger-ui/oauth2-redirect.html
     networks: [crew-flow-net]
 
   keycloak:
@@ -71,6 +75,8 @@ services:
       APP_HOST: ${APP_HOST}
       API_HOST: ${API_HOST}
       AUTH_HOST: ${KEYCLOAK_HOST}
+      LOGS_HOST: ${LOGS_HOST}
+      LOGS_BASIC_AUTH_HASH: ${LOGS_BASIC_AUTH_HASH}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - /srv/crew-flow/frontend:/srv/frontend:ro
@@ -80,6 +86,17 @@ services:
     depends_on:
       - backend
       - keycloak
+      - dozzle
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: crew-flow-dozzle
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DOZZLE_NO_ANALYTICS: "true"
+    networks: [crew-flow-net]
 
 networks:
   crew-flow-net:
