@@ -32,11 +32,8 @@ services:
       # No Redis
       SPRING_CACHE_TYPE: none
       MANAGEMENT_HEALTH_REDIS_ENABLED: "false"
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info"
-      # Override hardcoded jibemates.de URLs in application-prod.properties
-      SPRINGDOC_SWAGGER_UI_URLS_0_NAME: Crew Flow API
-      SPRINGDOC_SWAGGER_UI_URLS_0_URL: https://${API_HOST}/v3/api-docs
-      SPRINGDOC_SWAGGER_UI_OAUTH2_REDIRECT_URL: https://${API_HOST}/swagger-ui/oauth2-redirect.html
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health"
+      # Swagger/OpenAPI apagado en prod (ver application-prod.properties).
     networks: [crew-flow-net]
 
   keycloak:
